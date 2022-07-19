@@ -1,0 +1,122 @@
+<html>
+
+<head>
+	<style>
+		html * {
+			font-size: 1em !important;
+			font-family: Arial !important;
+		}
+
+		canvas {
+			border: 1px solid gray;
+		}
+
+		div {
+			margin: 10px auto 0 auto;
+		}
+	</style>
+	<script>
+		// image parameters 
+		var pixSize = 50;
+		var pixWidth = 4;
+		var pixHeight = 4;
+		var imgWidth = pixSize * pixWidth;
+		var imgHeight = pixSize * pixHeight;
+
+		// create new canvas with specified id
+		function createCanvas(id, text) {
+			var canvas = document.createElement('canvas');
+			canvas.id = id;
+			canvas.width = imgWidth;
+			canvas.height = imgHeight;
+
+			var div = document.createElement('div');
+			div.innerHTML = text;
+			div.appendChild(canvas);
+
+			var body = document.getElementsByTagName("body")[0];
+			body.appendChild(div);
+		}
+
+		// convert unsigned short rgb16 (R5G6B5) to rgb24
+		function convert16To24color(input) {
+			let RGB565 = input;
+			let r = (RGB565 & 0xF800) >> 11;
+			let g = (RGB565 & 0x07E0) >> 5;
+			let b = RGB565 & 0x1F;
+			console.log("rgb16 - ", r, g, b);
+
+			r = (r * 527 + 23) >> 6;
+			g = (g * 259 + 33) >> 6;
+			b = (b * 527 + 23) >> 6;
+			console.log("rgb24 - ", r, g, b);
+			
+			let RGB888 = 0;
+			RGB888 = RGB888 | (r << 16);
+			RGB888 = RGB888 | (g << 8);
+			RGB888 = RGB888 | (b);
+
+			var ret = "#" + RGB888.toString(16);
+			console.log(input, ret);
+
+			return ret;
+		}
+
+		// draw pixel of specified size and color
+		function drawPixel(id, x, y, rgb16) {
+			var canvas = document.getElementById(id);
+			var ctx = canvas.getContext('2d');
+			ctx.fillStyle = convert16To24color(rgb16);
+			ctx.fillRect(x * pixSize, y * pixSize, pixSize, pixSize);
+		}
+
+		// convert hex string to unsigned short array
+		function hexStringToShort(str) {
+			var arr = [];
+			for (var i = 0, len = str.length; i < len; i += 4) {
+				arr.push(parseInt(str.substr(i, 4), 16));
+			}
+			return new Uint16Array(arr);
+		}
+
+		// draw hash using specified settings
+		function drawHash(hash) {
+			var index = 0;
+			var img = hexStringToShort(hash);
+			console.log(img);
+			for (var y = 0; y < pixHeight; y++) {
+				for (var x = 0; x < pixWidth; x++) {
+					var rgb16 = img[index++];
+					drawPixel(hash, x, y, rgb16);
+				}
+			}
+		}
+
+		// calculate sha256 hash from string
+		async function sha256(message) {
+			const msgBuffer = new TextEncoder().encode(message);
+			const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+			const hashArray = Array.from(new Uint8Array(hashBuffer));
+			const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+			return hashHex;
+		}
+
+		// create image using form input
+		async function createImage() {
+			var word = document.getElementById("input").value
+			var hash = await sha256(word);
+			console.log(word, hash);
+			createCanvas(hash, word + " - ");
+			drawHash(hash);
+		}
+
+	</script>
+
+</head>
+
+
+<body>
+	<input id="input" type="text" value="LOVE"> - <button onclick="createImage()">GO</button>
+</body>
+
+</html>
