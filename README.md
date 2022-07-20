@@ -4,7 +4,7 @@ HashPad NFT project is synesthesia of cryptography art and real world
 
 ---
 
-Each image created from **AHS256** hash of original word and represented as 16 (4x4 pixel image) **R5G6B5** pixels translated to **RGB32**.
+Each image created from **SHA256** hash of original word and represented as 16 (4x4 pixel image) **R5G6B5** pixels translated to **RGB32**.
 
 Let say **LOVE** as a sample
 ```
